@@ -1,9 +1,23 @@
 import numpy as np
-import os.path
 import cv2
+import os
+from tqdm import tqdm
+import random
+import os
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+import matplotlib.patches as patches
+import pickle
+from glob import glob
+import imgaug as ia
+from imgaug import augmenters as iaa
+from shapely.geometry import Polygon
+
+
 BKG_THRESH = 60
 
-### Functions ###
+
+DEBUG = 0
 
 
 class Train_ranks:
@@ -36,8 +50,7 @@ def load_ranks(filepath):
 
 
 def change_bg(image):
-    print('startchange')
-   
+
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     blur = cv2.GaussianBlur(gray, (5, 5), 0)
 
@@ -57,6 +70,32 @@ def change_bg(image):
     retval, thresh = cv2.threshold(blur, thresh_level, 255, cv2.THRESH_BINARY)
 
     return thresh
+
+
+def getCardFomImg(baseImg):
+    changeBGImg = change_bg(baseImg)
+    cnts, outhier = cv2.findContours(
+        changeBGImg, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    outhier = outhier[0]
+    for i in range(len(cnts)):
+        loopCnts = i
+        size = cv2.contourArea(cnts[i])
+        peri = cv2.arcLength(cnts[i], True)
+        approx = cv2.approxPolyDP(cnts[i], 30, True)
+        pts = np.float32(approx)
+
+        # check this conturs is card
+        if size > 10000 and (len(approx) == 4) and (outhier[i][3] == -1):
+
+            x, y, w, h = cv2.boundingRect(cnts[i])
+
+            """Start image handleWarp card into 200x300 flattened image using perspective transform"""
+
+            warp = flattener(baseImg, pts, w, h)
+            if DEBUG == 1:
+                cv2.imshow('frame2', warp)
+            return warp
 
 
 def flattener(image, pts, w, h):
@@ -124,6 +163,109 @@ def flattener(image, pts, w, h):
                                               maxHeight-1], [0, maxHeight-1]], np.float32)
     M = cv2.getPerspectiveTransform(temp_rect, dst)
     warp = cv2.warpPerspective(image, M, (maxWidth, maxHeight))
-    warp = cv2.cvtColor(warp, cv2.COLOR_BGR2GRAY)
+    # warp = cv2.cvtColor(warp, cv2.COLOR_BGR2GRAY)
 
     return warp
+
+
+def saveCard(image, path, name):
+    cv2.imwrite(path+name, image)
+
+
+def find8PointOfCorner(card, needW, needH):
+    # cv2.drawContours(img, [hull_in_img], 0, (0, 255, 0), 1)
+    # cv2.imshow("Zone", zone)
+    """We need 8 point for topleft and bottom right"""
+
+    needW = 26
+    needH = 76
+    print(card.shape)
+
+    cardH = card.shape[0]
+    cardW = card.shape[1]
+
+    marginNeed = 5
+    topleftCornerX = marginNeed
+    topleftCornerY = marginNeed
+
+# cardW - marginNeed -20
+    bottomRightCornerX = cardW - marginNeed
+    bottomRightCornerY = cardH - marginNeed
+    """
+    topLeftKey = np.array([
+        [topleftCornerX, topleftCornerY],
+        [topleftCornerX + needW, topleftCornerY],
+        [topleftCornerX, topleftCornerY + needH],
+        [topleftCornerX + needW, topleftCornerY + needH],
+
+    ])
+    bottomRightKey = np.array([
+        [bottomRightCornerX - needW,bottomRightCornerY - needH],
+        [bottomRightCornerX, bottomRightCornerY - needH],
+        [bottomRightCornerX - needW, bottomRightCornerY],
+        [bottomRightCornerX, bottomRightCornerY],
+    ]
+    )
+    """
+
+    topLeftbb = [topleftCornerX, topleftCornerY,
+                 topleftCornerX + needW, topleftCornerY + needH]
+
+    bottomRightbb = [bottomRightCornerX - needW, bottomRightCornerY - needH,
+                     bottomRightCornerX, bottomRightCornerY]
+
+    if DEBUG == 1:
+
+       # arr = np.concatenate((topLeftbb, bottomRightbb), axis=0)
+        bbs = ia.BoundingBoxesOnImage([
+            pointToBoundingBox(topLeftbb),
+            pointToBoundingBox(bottomRightbb)],
+            shape=card.shape)
+        ia.imshow(bbs.draw_on_image(card, size=4))
+        
+    return topLeftbb, bottomRightbb
+
+
+def toKeyPoint(point):
+    kps = []
+    for val in point:
+        kps.append(ia.Keypoint(x=val[0], y=val[1]))
+    return kps
+
+def pointToBoundingBox(point):
+    return ia.BoundingBox(x1=point[0], y1=point[1], x2=point[2], y2=point[3])
+    
+def boundingBox(point):
+    print(point)
+    bb = []
+    for val in point:
+
+        bb.append(ia.BoundingBox(x1=val[0], y1=val[1], x2=val[2], y2=val[3]))
+    return bb
+
+
+def display_img(img, polygons=[], channels="bgr", size=9):
+    """
+        Function to display an inline image, and draw optional polygons (bounding boxes, convex hulls) on it.
+        Use the param 'channels' to specify the order of the channels ("bgr" for an image coming from OpenCV world)
+    """
+    if not isinstance(polygons, list):
+        polygons = [polygons]
+    if channels == "bgr":  # bgr (cv2 image)
+        nb_channels = img.shape[2]
+        if nb_channels == 4:
+            img = cv2.cvtColor(img, cv2.COLOR_BGRA2RGBA)
+        else:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    fig, ax = plt.subplots(figsize=(size, size))
+    ax.set_facecolor((0, 0, 0))
+    ax.imshow(img)
+    for polygon in polygons:
+        # An polygon has either shape (n,2),
+        # either (n,1,2) if it is a cv2 contour (like convex hull).
+        # In the latter case, reshape in (n,2)
+        if len(polygon.shape) == 3:
+            polygon = polygon.reshape(-1, 2)
+        patch = patches.Polygon(polygon, linewidth=1,
+                                edgecolor='g', facecolor='none')
+        ax.add_patch(patch)

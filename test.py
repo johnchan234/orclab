@@ -70,7 +70,7 @@ while cam_quit >-1  :
         """Start image handle"""
         changeBGImg = Utils.change_bg(baseImg)
         dummy, cnts, outhier = cv2.findContours(
-            changeBGImg, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        changeBGImg, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         cv2.imwrite(debugPath+str(cam_quit)+"_output.jpg", baseImg)
 
         outhier = outhier[0]
