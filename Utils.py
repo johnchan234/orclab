@@ -73,6 +73,7 @@ def change_bg(image):
 
 
 def getCardFomImg(baseImg):
+    res = []
     changeBGImg = change_bg(baseImg)
     cnts, outhier = cv2.findContours(
         changeBGImg, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -95,7 +96,13 @@ def getCardFomImg(baseImg):
             warp = flattener(baseImg, pts, w, h)
             if DEBUG == 1:
                 cv2.imshow('frame2', warp)
-            return warp
+
+            b_c, g_c, r_c = cv2.split(warp)
+            a_c = np.ones(b_c.shape, dtype=b_c.dtype) * 255
+            final = cv2.merge([b_c, g_c, r_c, a_c])
+           
+            res.append(final)
+    return res
 
 
 def flattener(image, pts, w, h):
@@ -191,7 +198,7 @@ def find8PointOfCorner(card, needW, needH):
 # cardW - marginNeed -20
     bottomRightCornerX = cardW - marginNeed
     bottomRightCornerY = cardH - marginNeed
-    """
+
     topLeftKey = np.array([
         [topleftCornerX, topleftCornerY],
         [topleftCornerX + needW, topleftCornerY],
@@ -200,13 +207,12 @@ def find8PointOfCorner(card, needW, needH):
 
     ])
     bottomRightKey = np.array([
-        [bottomRightCornerX - needW,bottomRightCornerY - needH],
+        [bottomRightCornerX - needW, bottomRightCornerY - needH],
         [bottomRightCornerX, bottomRightCornerY - needH],
         [bottomRightCornerX - needW, bottomRightCornerY],
         [bottomRightCornerX, bottomRightCornerY],
     ]
     )
-    """
 
     topLeftbb = [topleftCornerX, topleftCornerY,
                  topleftCornerX + needW, topleftCornerY + needH]
@@ -222,8 +228,8 @@ def find8PointOfCorner(card, needW, needH):
             pointToBoundingBox(bottomRightbb)],
             shape=card.shape)
         ia.imshow(bbs.draw_on_image(card, size=4))
-        
-    return topLeftbb, bottomRightbb
+
+    return topLeftKey, bottomRightKey, topLeftbb, bottomRightbb
 
 
 def toKeyPoint(point):
@@ -232,9 +238,11 @@ def toKeyPoint(point):
         kps.append(ia.Keypoint(x=val[0], y=val[1]))
     return kps
 
+
 def pointToBoundingBox(point):
     return ia.BoundingBox(x1=point[0], y1=point[1], x2=point[2], y2=point[3])
-    
+
+
 def boundingBox(point):
     print(point)
     bb = []
@@ -269,3 +277,25 @@ def display_img(img, polygons=[], channels="bgr", size=9):
         patch = patches.Polygon(polygon, linewidth=1,
                                 edgecolor='g', facecolor='none')
         ax.add_patch(patch)
+
+
+def loadRandomCard(cards_pck_fn):
+    cardLoaded = pickle.load(open(cards_pck_fn, 'rb'))
+    # self._cards is a dictionary where keys are card names (ex:'Kc') and values are lists of (img,hullHL,hullLR)
+
+    _nb_cards_by_value = {k: len(cardLoaded[k]) for k in cardLoaded}
+   
+    card_name = random.choice(list(cardLoaded.keys()))
+    card33, left, right = cardLoaded[card_name][random.randint(
+        0, _nb_cards_by_value[card_name]-1)]
+    return card33, card_name, left, right
+
+
+def loadRandomBg(backgrounds_pck_fn, display):
+    _images = pickle.load(open(backgrounds_pck_fn, 'rb'))
+    _nb_images = len(_images)
+    bg=_images[random.randint(0,_nb_images-1)]
+    if display:
+        plt.imshow(bg)
+        
+    return bg
