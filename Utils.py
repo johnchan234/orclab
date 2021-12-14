@@ -72,13 +72,18 @@ def change_bg(image):
     return thresh
 
 
+
+
 def getCardFomImg(baseImg):
     res = []
+
     changeBGImg = change_bg(baseImg)
+    cv2.imshow('changeBGImg', changeBGImg)
     cnts, outhier = cv2.findContours(
         changeBGImg, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     outhier = outhier[0]
+
     for i in range(len(cnts)):
         loopCnts = i
         size = cv2.contourArea(cnts[i])
@@ -87,20 +92,21 @@ def getCardFomImg(baseImg):
         pts = np.float32(approx)
 
         # check this conturs is card
-        if size > 10000 and (len(approx) == 4) and (outhier[i][3] == -1):
-
+        if size > 8000 and (len(approx) == 4) and (outhier[i][3] == -1):
+            print("find!!")
             x, y, w, h = cv2.boundingRect(cnts[i])
 
             """Start image handleWarp card into 200x300 flattened image using perspective transform"""
 
             warp = flattener(baseImg, pts, w, h)
+           
             if DEBUG == 1:
                 cv2.imshow('frame2', warp)
 
             b_c, g_c, r_c = cv2.split(warp)
             a_c = np.ones(b_c.shape, dtype=b_c.dtype) * 255
             final = cv2.merge([b_c, g_c, r_c, a_c])
-           
+
             res.append(final)
     return res
 
@@ -179,25 +185,25 @@ def saveCard(image, path, name):
     cv2.imwrite(path+name, image)
 
 
-def find8PointOfCorner(card, needW, needH):
+def find8PointOfCorner(card, needW, needH,debug):
     # cv2.drawContours(img, [hull_in_img], 0, (0, 255, 0), 1)
     # cv2.imshow("Zone", zone)
     """We need 8 point for topleft and bottom right"""
 
-    needW = 26
-    needH = 76
-    print(card.shape)
+   # needW = 26
+    #needH = 76
+    #print(card.shape)
 
     cardH = card.shape[0]
     cardW = card.shape[1]
 
     marginNeed = 5
-    topleftCornerX = marginNeed
-    topleftCornerY = marginNeed
+    topleftCornerX = marginNeed-2
+    topleftCornerY = marginNeed+marginNeed
 
 # cardW - marginNeed -20
-    bottomRightCornerX = cardW - marginNeed
-    bottomRightCornerY = cardH - marginNeed
+    bottomRightCornerX = cardW - marginNeed+2
+    bottomRightCornerY = cardH - marginNeed-marginNeed
 
     topLeftKey = np.array([
         [topleftCornerX, topleftCornerY],
@@ -213,24 +219,50 @@ def find8PointOfCorner(card, needW, needH):
         [bottomRightCornerX, bottomRightCornerY],
     ]
     )
+    finalTopLK = np.array([
+        [topLeftKey[0][0] + (needW/2), topLeftKey[0][1]+ (needH/2)]
+        ])
 
-    topLeftbb = [topleftCornerX, topleftCornerY,
-                 topleftCornerX + needW, topleftCornerY + needH]
+    finalBRK = np.array([
+        [bottomRightKey[0][0] + (needW/2), bottomRightKey[0][1]+ (needH/2)]
+        ])
 
-    bottomRightbb = [bottomRightCornerX - needW, bottomRightCornerY - needH,
-                     bottomRightCornerX, bottomRightCornerY]
+    
 
-    if DEBUG == 1:
+    topLeftbb = keyPointToBB(finalTopLK, needW, needH)
+ 
+    bottomRightbb = keyPointToBB(finalBRK, needW, needH)
+    
+    if debug == 1:
 
-       # arr = np.concatenate((topLeftbb, bottomRightbb), axis=0)
+        arr = np.concatenate((topLeftbb, bottomRightbb), axis=0)
+        b_c, g_c, r_c, a_c = cv2.split(card)
+        newI = cv2.merge([b_c, g_c, r_c])
+        
+
         bbs = ia.BoundingBoxesOnImage([
             pointToBoundingBox(topLeftbb),
             pointToBoundingBox(bottomRightbb)],
-            shape=card.shape)
-        ia.imshow(bbs.draw_on_image(card, size=4))
+            shape=newI.shape)
+        ia.imshow(bbs.draw_on_image(newI, size=2))
+        plt.show()
 
     return topLeftKey, bottomRightKey, topLeftbb, bottomRightbb
 
+    #return finalTopLK, finalBRK
+
+
+def afterRotaKeyPointToBB(kps_aug, imgW, imgH):
+
+    extend = 3  # To make the bounding box a little bit bigger
+    kpsx = [kp.x for kp in kps_aug.keypoints]
+    minx = max(0, int(min(kpsx)-extend))
+    maxx = min(imgW, int(max(kpsx)+extend))
+    kpsy = [kp.y for kp in kps_aug.keypoints]
+    miny = max(0, int(min(kpsy)-extend))
+    maxy = min(imgH, int(max(kpsy)+extend))
+    #print("x1 : ", minx, "y1 : ", miny, "x2 ： ", maxx, "y2 :", maxy)
+    return ia.BoundingBox(x1=minx, y1=miny, x2=maxx, y2=maxy)
 
 def toKeyPoint(point):
     kps = []
@@ -238,6 +270,12 @@ def toKeyPoint(point):
         kps.append(ia.Keypoint(x=val[0], y=val[1]))
     return kps
 
+def keyPointToBB(point,needW,needH):
+    #print("point : ", point[0])
+    x = point[0][0]
+    y=  point[0][1]
+
+    return [x - (needW/2), y-(needH/2), x + (needW/2), y +(needH/2)]
 
 def pointToBoundingBox(point):
     return ia.BoundingBox(x1=point[0], y1=point[1], x2=point[2], y2=point[3])
@@ -284,18 +322,50 @@ def loadRandomCard(cards_pck_fn):
     # self._cards is a dictionary where keys are card names (ex:'Kc') and values are lists of (img,hullHL,hullLR)
 
     _nb_cards_by_value = {k: len(cardLoaded[k]) for k in cardLoaded}
+    return cardLoaded,_nb_cards_by_value
    
+
+def randomGetCard(cardLoaded, _nb_cards_by_value):
     card_name = random.choice(list(cardLoaded.keys()))
-    card33, left, right = cardLoaded[card_name][random.randint(
-        0, _nb_cards_by_value[card_name]-1)]
+    card33, left, right = cardLoaded[card_name][random.randint(0, _nb_cards_by_value[card_name]-1)]
     return card33, card_name, left, right
 
+def loadRandomBg(backgrounds_pck_fn):
+    return pickle.load(open(backgrounds_pck_fn, 'rb'))
 
-def loadRandomBg(backgrounds_pck_fn, display):
-    _images = pickle.load(open(backgrounds_pck_fn, 'rb'))
-    _nb_images = len(_images)
-    bg=_images[random.randint(0,_nb_images-1)]
-    if display:
-        plt.imshow(bg)
-        
-    return bg
+def randomGetGB(_images):
+    num = len(_images)
+    return _images[random.randint(0, num-1)]
+
+
+
+def roundTo(num):
+    return str(round(num, 6))
+
+
+def getFinialPointToYolov5(bb, final):
+
+    """
+    bbW = (bb.x2-bb.x1)
+    bbH = bb.y2-bb.y1
+
+    centerY = bb.y1+(bbH/2)
+    centerX = bb.x1+(bbW/2)
+
+    strW = roundTo(bbW/final.shape[0])
+    strH = roundTo(bbH/final.shape[0])
+    strX = roundTo(centerX/final.shape[0])
+    strY = roundTo(centerY/final.shape[0])
+    """
+    bbW = (bb.x2-bb.x1)
+    bbH = bb.y2-bb.y1
+
+    centerY = bb.y1+(bbH/2)
+    centerX = bb.x1+(bbW/2)
+
+    strW = roundTo(bbW/final.shape[0])
+    strH = roundTo(bbH/final.shape[0])
+    strX = roundTo(centerX/final.shape[0])
+    strY = roundTo(centerY/final.shape[0])
+    return strW,strH,strX,strY
+

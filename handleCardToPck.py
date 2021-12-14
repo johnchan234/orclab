@@ -13,20 +13,25 @@ import imgaug as ia
 import Utils
 
 
+
+
 """Save card to pck ----------------"""
 cards_pck_fn = "./image/pck/cards.pck"
 srcFile = "./image/videoCard/"
 cards = {}
+i  = 0
 for filename in os.listdir(srcFile):
-    print(filename)
-    needW = 40
-    needH = 70
-    cardName = filename.split(".")[0]
-    cards[cardName] = []
-    img = cv2.imread(srcFile+filename, cv2.IMREAD_UNCHANGED)
-    topLeftKey, bottomRightKey, topLeftKeyBB, bottomRightKeyBB = Utils.find8PointOfCorner(
-        img, needW=needW, needH=needH)
-    print("img : ", img.shape)
-    cards[cardName].append((img, topLeftKey, bottomRightKey))
+    if ".png" in filename:
+        print(str(i)+":"+filename)
+        needW = 26
+        needH = 76
+        cardName = filename.split(".")[0]
+        cards[cardName] = []
+        img = cv2.imread(srcFile+filename, cv2.IMREAD_UNCHANGED)
+        
+        topLeftKey, bottomRightKey, topLeftKeyBB, bottomRightKeyBB = Utils.find8PointOfCorner(img, needW=needW, needH=needH,debug=0)
+        #topLeftKey, bottomRightKey = Utils.find8PointOfCorner(img, needW=needW, needH=needH)
+        cards[cardName].append((img, topLeftKey, bottomRightKey))
+        i+=1
 
 pickle.dump(cards, open(cards_pck_fn, 'wb'))

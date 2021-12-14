@@ -2,9 +2,13 @@
 
 1. Run handleVideoToCardPNG
     - create PNG to ./image/videoCard/
-2. Run handlebgToPck
+
+2. 手動整D卡既名, 再放洛個4個FOLDER到 , 再RUN renameFileCard
+
+3. Run handlebgToPck
   - create bg pck to ./pck/
-2. Run handleCardToPck
+  
+3. Run handleCardToPck
     - create card pck to ./pck/
         -all to card inside /videoCard should include to pck
 
