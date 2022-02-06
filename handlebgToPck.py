@@ -13,8 +13,10 @@ import imgaug as ia
 
 
 
-backgrounds_pck_fn = "./image/pck/backgrounds.pck"
-dtd_dir = "./image/dtd-r1.0.1/dtd/images/"
+#backgrounds_pck_fn = "./image/pck/backgrounds.pck"
+#dtd_dir = "./image/dtd-r1.0.1/dtd/images/"
+dtd_dir = "./image/whitebg/"
+backgrounds_pck_fn = "./image/pck/whiteBackgrounds.pck"
 bg_images = []
 for subdir in glob(dtd_dir+"/*"):
     for f in glob(subdir+"/*.jpg"):

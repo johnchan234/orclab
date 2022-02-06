@@ -26,7 +26,7 @@ spades (♠) = 3
 """
 
 
-srcFile = "./image/videoImg/"
+#srcFile = "./image/videoImg/"
 outputFile = "./image/videoCard/"
 
 """LOOP jpg / video cap, find the card and save as PNG"""
@@ -38,6 +38,7 @@ def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
 
 for folderename in os.listdir(outputFile):
+    print("outputFile : ", folderename)
     renamePath = ""
     if folderename == "clubs":
         renamePath= "0"
@@ -47,16 +48,19 @@ for folderename in os.listdir(outputFile):
         renamePath = "2"
     elif folderename == "spades":
         renamePath = "3"
-    if folderename!="temp":
+
+    if  renamePath!= "":
+
         for cardPng in os.listdir(outputFile+folderename+"/"):
             x = cardPng.split(".")
             y = x[0].split("_")
+            print("x :",x)
+            print("y :",y)
             realFileName = renamePath+"_" + \
                 y[0]+"_"+y[1]+"_"+current_milli_time()+"_"+id_generator()+"."+x[1]
             
             print(realFileName)
-            os.rename(outputFile+folderename+"/"+cardPng,
-                      outputFile + "/"+realFileName)
+            os.rename(outputFile+folderename+"/"+cardPng,outputFile + "/topck/"+realFileName)
 
 
 
