@@ -398,9 +398,9 @@ def randomGetCard(cardLoaded, _nb_cards_by_value,cardType):
         listA= list1 + list2
     if cardType=="black":
         listA= list0 + list3
-    if cardType=="3only"
+    if cardType=="3only":
         listA= list3
-     if cardType=="0only" 
+    if cardType=="0only":
         listA =list0   
     #print(list(cardLoaded.keys()))
     card_name = random.choice(listA)
