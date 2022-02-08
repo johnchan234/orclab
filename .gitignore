@@ -4,8 +4,10 @@ __pycache__/
 image/dtd-r1.0.1/
 image/dtd-r1.0.1.tar
 image/pck/backgrounds.pck
-image/genTrainData/images
-image/genTrainData/labels
+image/genTrainData/images/val/
+image/genTrainData/images/train/
+image/genTrainData/labels/val/
+image/genTrainData/labels/train/
 image/temp/
 image/videoImg/t
 orclab.zip
