@@ -13,7 +13,7 @@ import imgaug as ia
 from imgaug import augmenters as iaa
 from shapely.geometry import Polygon
 from sympy import Point, Polygon
-
+from datetime import datetime
 
 BKG_THRESH = 60
 
@@ -205,7 +205,7 @@ def find8PointOfCorner(card, needW, needH,debug):
     cardW = card.shape[1]
 
     marginNeed = 5
-    topleftCornerX = marginNeed-2
+    topleftCornerX = marginNeed+2
     topleftCornerY = marginNeed+marginNeed
 
 # cardW - marginNeed -20
@@ -403,6 +403,7 @@ def randomGetCard(cardLoaded, _nb_cards_by_value,cardType):
     if cardType=="0only":
         listA =list0   
     #print(list(cardLoaded.keys()))
+    random.seed(datetime.now())
     card_name = random.choice(listA)
     #print("card_name ", cardLoaded.keys())
     ##card_name = "1_j_1"

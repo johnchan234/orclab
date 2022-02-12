@@ -24,8 +24,8 @@ for filename in os.listdir(srcFile):
     if ".png" in filename:
        # print(str(i)+":"+filename)
         
-        needW = 26
-        needH = 76
+        needW = 20
+        needH = 70
         cardName = filename.split(".")[0]
         cards[cardName] = []
         img = cv2.imread(srcFile+filename, cv2.IMREAD_UNCHANGED)
