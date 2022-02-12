@@ -281,7 +281,7 @@ for genNum in range(0, genMax):
 
     seq3 = [
         iaa.Affine(rotate=(-85, -95)),
-        iaa.TranslateX(px=(-60)),
+        iaa.Affine(translate_px={"x": -20}),
     ]
     kp = getKp(left3, right3, cardFromPck3.shape)
 
