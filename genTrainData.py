@@ -281,7 +281,7 @@ for genNum in range(0, genMax):
 
     seq3 = [
         iaa.Affine(rotate=(-85, -95)),
-        iaa.Affine(translate_px={"x": -20}),
+        iaa.Affine(translate_px={"x": -60}),
     ]
     kp = getKp(left3, right3, cardFromPck3.shape)
 
@@ -375,7 +375,7 @@ for genNum in range(0, genMax):
              toFiler+"/"+dataJPGName+".txt", "w+")
     f.write(txt)
     f.close()
-"""
+
     fig, ax = plt.subplots(figsize=(9, 9))
     ax.imshow(final)
 
@@ -392,4 +392,4 @@ for genNum in range(0, genMax):
 
 
     plt.show()
-"""
+
