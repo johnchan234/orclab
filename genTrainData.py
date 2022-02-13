@@ -71,14 +71,12 @@ cardW = 200
 cardH = 300
 
 
-
 def current_milli_time():
     return str(round(time.time() * 1000))
 
 
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
-
 
 
 genMax = 100
@@ -92,16 +90,36 @@ if (len(sys.argv) == 3):
 for genNum in range(0, genMax):
     usingType = "1"
 
-    card1seq = [iaa.Affine(rotate=(-15, 15))]
+    card1seq = [iaa.Affine(rotate=(-15, 15)),
+                iaa.Affine(translate_percent={"x": -0.1, "y": -0.09})
+                ]
+
     card2seq = [
         iaa.Affine(rotate=(-15, 15)),
         iaa.Affine(translate_percent={
             "x": 0.4, "y":  (0.05, 0.5)}),
     ]
-    card3seq = iaa.Affine(rotate=(-85, -95)),
-    iaa.Affine(translate_px={"x": -60}),
+    card3seq = [
+        iaa.Affine(rotate=(-85, -95)),
+        iaa.Affine(translate_px={"x": -60}),
+    ]
+
     if genNum % 2 == 0:
-        usingType = 2
+      
+        card1seq = [
+            iaa.Affine(rotate=(-85, -95)),
+            iaa.Affine(translate_percent={"x": 0, "y": -0.45})
+        ]
+
+        card2seq = [
+            iaa.Affine(rotate=(-85, -95)),
+            iaa.Affine(translate_percent={
+                "x": (0.3,0.4), "y": (0.01, 0.03)}),
+        ]
+        card3seq = [
+            iaa.Affine(rotate=(-15, 15)),
+            iaa.Affine(translate_percent={"x": -0.09, "y": 0.5})
+        ]
 
     bg = Utils.randomGetGB(bgPck)
 
@@ -114,7 +132,7 @@ for genNum in range(0, genMax):
     while True:
         invalid = False
 
-        card1.setSeqOption([iaa.Affine(rotate=(-15, 15))])
+        card1.setSeqOption(card1seq)
         card1.createCardAndRandomPlace()
 
         temp = card1.getBBXY()
@@ -126,49 +144,18 @@ for genNum in range(0, genMax):
         if not invalid:
             break
     """Card 1 finish """
-    """Card 3"""
-    cardFromPck3, cardName3, left3, right3 = Utils.randomGetCard(
-        cardLoaded, _nb_cards_by_value, genType)
 
-    card3 = newCardObject.MyCard(cardFromPck3, cardName3, left3, right3)
-
-    seq3 = [
-        iaa.Affine(rotate=(-85, -95)),
-        iaa.Affine(translate_px={"x": -60}),
-    ]
-    card3.setSeqOption(seq3)
-    card3.createCardAndRandomPlace()
-
-   
     """Card 2"""
     cardFromPck2, cardName2, left2, right2 = Utils.randomGetCard(
         cardLoaded, _nb_cards_by_value, genType)
     card2 = newCardObject.MyCard(cardFromPck2, cardName2, left2, right2)
 
-
-   # print("tempCard shape :", newSizeCard.shape)
     while True:
         invalid = False
         intersect_ratio = 0.8  # 交叉比率閾值
 
-        seq2 = [
-            iaa.Affine(rotate=(-15, 15)),
-            iaa.Affine(translate_percent={
-                "x": 0.4, "y":  (0.05, 0.5)}),
-        ]
-
-        #kp = getKp(left2, right, cardFromPck2.shape)
-        card2.setSeqOption(seq2)
+        card2.setSeqOption(card2seq)
         card2.createCardAndRandomPlace()
-
-        """
-        imageAug2, bb2, bbdown2, bbcenter2, mask2 = createCardAndRandomPlace(
-            seq2, newSizeCard2, kp)
-
-        strW2, strH2, strX2, strY2 = Utils.getFinialPointToYolov5(bb2, mask2)
-        strWDown2, strHDown2, strXDown2, strYDown2 = Utils.getFinialPointToYolov5(
-            bbdown2, mask2)
-        """
         temp = card1.getBBXY()
         if float(temp["x"]) >= 0.9 or float(temp["y"]) >= 0.9:
 
@@ -192,6 +179,17 @@ for genNum in range(0, genMax):
 
             if not invalid:
                 break
+    """Card 2 Finish"""
+
+    """Card 3"""
+    cardFromPck3, cardName3, left3, right3 = Utils.randomGetCard(
+        cardLoaded, _nb_cards_by_value, genType)
+
+    card3 = newCardObject.MyCard(cardFromPck3, cardName3, left3, right3)
+
+    card3.setSeqOption(card3seq)
+    card3.createCardAndRandomPlace()
+    """Card 3 Finish"""
 
     scaleBg = iaa.Resize({"height": imgW, "width": imgH})
     bg = scaleBg.augment_image(bg)
@@ -207,18 +205,14 @@ for genNum in range(0, genMax):
     final = np.where(card3.getMask(), tMask[:, :, 0:3], final)
 
     #tempN1 = findCardName(cardName)
-   
+
     #tempN2 = findCardName(cardName2)
-  
 
     print("genNum :", genNum, " card1 : ", card1.getRealCardName(),
           "card2 : ",  card2.getRealCardName(), " card3: ", card3.getRealCardName())
 
- 
-
     txt = card1.getBBYolov5LabelString()
     txt += card1.getBBDownYolov5LabelString()
-
 
     txt += card2.getBBYolov5LabelString()
     txt += card2.getBBDownYolov5LabelString()
@@ -226,7 +220,6 @@ for genNum in range(0, genMax):
 
     txt += card3.getBBYolov5LabelString()
     txt += card3.getBBDownYolov5LabelString()
-
 
     toFiler = "train"
     if genNum > int(genMax*0.9)-3:
@@ -241,9 +234,7 @@ for genNum in range(0, genMax):
              toFiler+"/"+dataJPGName+".txt", "w+")
     f.write(txt)
     f.close()
-    
-    """
-
+"""
     fig, ax = plt.subplots(figsize=(9, 9))
     ax.imshow(final)
 
@@ -262,4 +253,4 @@ for genNum in range(0, genMax):
 
     print(txt)
     plt.show()
-"""
+    """
