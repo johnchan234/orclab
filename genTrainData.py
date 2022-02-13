@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 import time
 import Utils
+import newCardObject
 import os.path
 
 from os import listdir
@@ -90,31 +91,11 @@ imgW = 720
 imgH = 720
 
 
-cardW = 57
-cardH = 87
 cornerXmin = 2
 cornerXmax = 10.5
 cornerYmin = 2.5
 cornerYmax = 23
 
-# We convert the measures from mm to pixels: multiply by an arbitrary factor 'zoom'
-# You shouldn't need to change this
-zoom = 4
-cardW *= zoom
-cardH *= zoom
-cornerXmin = int(cornerXmin*zoom)
-cornerXmax = int(cornerXmax*zoom)
-cornerYmin = int(cornerYmin*zoom)
-cornerYmax = int(cornerYmax*zoom)
-
-decalX = int((imgW-cardW)/2)
-decalY = int((imgH-cardH)/2)
-
-
-refCard = np.array([[0, 0], [cardW, 0], [cardW, cardH],
-                    [0, cardH]], dtype=np.float32)
-refCardRot = np.array([[cardW, 0], [cardW, cardH], [
-                      0, cardH], [0, 0]], dtype=np.float32)
 
 if not os.path.exists("./image/genTrainData/images/train"):
     os.makedirs("./image/genTrainData/images/train")
@@ -207,7 +188,7 @@ def createCardAndRandomPlace(seqOption, newSizeCard, kplist):
     random.seed(datetime.now())
     seqOptionDefault = [
         iaa.Affine(scale=[0.5, 0.7])
-        #iaa.Affine(scale=[0.7])
+        # iaa.Affine(scale=[0.7])
     ]
     ##iaa.Affine(rotate=(-10, 10)),
 
@@ -245,29 +226,36 @@ if (len(sys.argv) == 3):
     genType = sys.argv[2]
 
 for genNum in range(0, genMax):
+    usingType = "1"
+
+    card1seq = [iaa.Affine(rotate=(-15, 15))]
+    card2seq = [
+        iaa.Affine(rotate=(-15, 15)),
+        iaa.Affine(translate_percent={
+            "x": 0.4, "y":  (0.05, 0.5)}),
+    ]
+    card3seq = iaa.Affine(rotate=(-85, -95)),
+    iaa.Affine(translate_px={"x": -60}),
+    if genNum % 2 == 0:
+        usingType = 2
 
     bg = Utils.randomGetGB(bgPck)
+
     """Card 1"""
     cardFromPck, cardName, left, right = Utils.randomGetCard(
         cardLoaded, _nb_cards_by_value, genType)
-    # print("cardFromPck : ", cardFromPck.shape, "cardName :  ", cardName)
 
-    newSizeCard = createFitSizeEmptyCard(cardFromPck)
-
-    # print("tempCard shape :", newSizeCard.shape)
+    card1 = newCardObject.MyCard(cardFromPck, cardName, left, right)
 
     while True:
         invalid = False
-        seq = [iaa.Affine(rotate=(-15, 15))]
-        kp = getKp(left, right, cardFromPck.shape)
-        imageAug, bb, bbdown, bbcenter, mask1 = createCardAndRandomPlace(
-            seq, newSizeCard, kp)
 
-        strW, strH, strX, strY = Utils.getFinialPointToYolov5(bb, mask1)
-        strWDown, strHDown, strXDown, strYDown = Utils.getFinialPointToYolov5(
-            bbdown, mask1)
+        card1.setSeqOption([iaa.Affine(rotate=(-15, 15))])
+        card1.createCardAndRandomPlace()
 
-        if float(strX) >= 0.9 or float(strY) >= 0.9:
+        temp = card1.getBBXY()
+
+        if float(temp["x"]) >= 0.9 or float(temp["y"]) >= 0.9:
             invalid = True
         else:
             invalid = False
@@ -277,27 +265,22 @@ for genNum in range(0, genMax):
     """Card 3"""
     cardFromPck3, cardName3, left3, right3 = Utils.randomGetCard(
         cardLoaded, _nb_cards_by_value, genType)
-    newSizeCard3 = createFitSizeEmptyCard(cardFromPck3)
+
+    card3 = newCardObject.MyCard(cardFromPck3, cardName3, left3, right3)
 
     seq3 = [
         iaa.Affine(rotate=(-85, -95)),
         iaa.Affine(translate_px={"x": -60}),
     ]
-    kp = getKp(left3, right3, cardFromPck3.shape)
+    card3.setSeqOption(seq3)
+    card3.createCardAndRandomPlace()
 
-    imageAug3, bb3, bbdown3, bbcenter3, mask3 = createCardAndRandomPlace(
-        seq3, newSizeCard3, kp)
-
-    strW3, strH3, strX3, strY3 = Utils.getFinialPointToYolov5(bb3, mask3)
-
-
-
-
-
+   
     """Card 2"""
     cardFromPck2, cardName2, left2, right2 = Utils.randomGetCard(
         cardLoaded, _nb_cards_by_value, genType)
-    newSizeCard2 = createFitSizeEmptyCard(cardFromPck2)
+    card2 = newCardObject.MyCard(cardFromPck2, cardName2, left2, right2)
+
 
    # print("tempCard shape :", newSizeCard.shape)
     while True:
@@ -310,16 +293,20 @@ for genNum in range(0, genMax):
                 "x": 0.4, "y":  (0.05, 0.5)}),
         ]
 
-        kp = getKp(left2, right, cardFromPck2.shape)
+        #kp = getKp(left2, right, cardFromPck2.shape)
+        card2.setSeqOption(seq2)
+        card2.createCardAndRandomPlace()
 
+        """
         imageAug2, bb2, bbdown2, bbcenter2, mask2 = createCardAndRandomPlace(
             seq2, newSizeCard2, kp)
 
         strW2, strH2, strX2, strY2 = Utils.getFinialPointToYolov5(bb2, mask2)
         strWDown2, strHDown2, strXDown2, strYDown2 = Utils.getFinialPointToYolov5(
             bbdown2, mask2)
-
-        if float(strX2) >= 0.9 or float(strY2) >= 0.9:
+        """
+        temp = card1.getBBXY()
+        if float(temp["x"]) >= 0.9 or float(temp["y"]) >= 0.9:
 
             invalid = True
         else:
@@ -327,11 +314,12 @@ for genNum in range(0, genMax):
 
         if not invalid:
 
-            p1, p2, p3, p4 = Utils.kkToSinplePoint(bbcenter)
+            ##p1, p2, p3, p4 = Utils.kkToSinplePoint(bbcenter)
+            p1, p2, p3, p4 = card1.getCenterSinglePoint()
 
             mainPoly2 = Polygon(p1, p2, p3, p4)
 
-            p21, p22, p23, p24 = Utils.kkToSinplePoint(bbcenter2)
+            p21, p22, p23, p24 = card2.getCenterSinglePoint()
 
             smallPoly1 = Polygon(p21, p22, p23, p24)
 
@@ -344,23 +332,37 @@ for genNum in range(0, genMax):
     scaleBg = iaa.Resize({"height": imgW, "width": imgH})
     bg = scaleBg.augment_image(bg)
 
-    final = np.where(mask1, imageAug[:, :, 0:3], bg)
-    final = np.where(mask2, imageAug2[:, :, 0:3], final)
-    final = np.where(mask3, imageAug3[:, :, 0:3], final)
+    #final = np.where(mask1, imageAug[:, :, 0:3], bg)
+    tMask = card1.getImageAug()
+    final = np.where(card1.getMask(), tMask[:, :, 0:3], bg)
+
+    tMask = card2.getImageAug()
+    final = np.where(card2.getMask(), tMask[:, :, 0:3], final)
+
+    tMask = card3.getImageAug()
+    final = np.where(card3.getMask(), tMask[:, :, 0:3], final)
+
+    #tempN1 = findCardName(cardName)
+   
+    #tempN2 = findCardName(cardName2)
   
 
-    tempN1 = findCardName(cardName)
-    tempN2 = findCardName(cardName2)
-    tempN3 = findCardName(cardName3)
-  
-    print("genNum :", genNum, " tempN1 : ", tempN1,
-          "tempN2 : ", tempN2, " tempN3: ")
-    txt = toYolov5LabelFormat(tempN1, strX, strY, strW, strH)
-    ##txt += toYolov5LabelFormat(tempN1, strXDown, strYDown, strWDown, strHDown)
-    txt += toYolov5LabelFormat(tempN2, strX2, strY2, strW2, strH2)
+    print("genNum :", genNum, " card1 : ", card1.getRealCardName(),
+          "card2 : ",  card2.getRealCardName(), " card3: ", card3.getRealCardName())
+
+ 
+
+    txt = card1.getBBYolov5LabelString()
+    txt += card1.getBBDownYolov5LabelString()
+
+
+    txt += card2.getBBYolov5LabelString()
+    txt += card2.getBBDownYolov5LabelString()
     ##txt += toYolov5LabelFormat(tempN2, strXDown2,strYDown2, strWDown2, strHDown2)
-    txt += toYolov5LabelFormat(tempN3, strX3, strY3, strW3, strH3)
-   
+
+    txt += card3.getBBYolov5LabelString()
+    txt += card3.getBBDownYolov5LabelString()
+
 
     toFiler = "train"
     if genNum > int(genMax*0.9)-3:
@@ -375,21 +377,25 @@ for genNum in range(0, genMax):
              toFiler+"/"+dataJPGName+".txt", "w+")
     f.write(txt)
     f.close()
+    
+    """
 
     fig, ax = plt.subplots(figsize=(9, 9))
     ax.imshow(final)
 
-    ax.add_patch(Utils.genRectanglePath(bb))
-    # ax.add_patch(Utils.genRectanglePath(bbdown))
-    ax.add_patch(Utils.genRectanglePath(bb2))
+    ax.add_patch(Utils.genRectanglePath(card1.getBB()))
+    ax.add_patch(Utils.genRectanglePath(card1.getBBDown()))
 
-    # ax.add_patch(Utils.genRectanglePath(bbdown2))
-    ax.add_patch(Utils.genRectanglePath(bb3))
-   
-    ax.add_patch(Utils.genRectanglePath(bbcenter))
-    ax.add_patch(Utils.genRectanglePath(bbcenter2))
-    ax.add_patch(Utils.genRectanglePath(bbcenter3))
+    ax.add_patch(Utils.genRectanglePath(card2.getBB()))
+    ax.add_patch(Utils.genRectanglePath(card2.getBBDown()))
 
+    ax.add_patch(Utils.genRectanglePath(card3.getBB()))
+    ax.add_patch(Utils.genRectanglePath(card3.getBBDown()))
 
+    ax.add_patch(Utils.genRectanglePath(card1.getBBcenter()))
+    ax.add_patch(Utils.genRectanglePath(card2.getBBcenter()))
+    ax.add_patch(Utils.genRectanglePath(card3.getBBcenter()))
+
+    print(txt)
     plt.show()
-
+"""

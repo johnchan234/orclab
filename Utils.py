@@ -390,9 +390,9 @@ def randomGetCard(cardLoaded, _nb_cards_by_value,cardType):
             '3_j_2_1639669744742_CG3D2J', '3_j_3_1639669744743_AAN4IR', '3_k_1_1639669744744_9943', '3_k_1_1639669744744_994W323',
              '3_k_1_1639669744744_994W3O', '3_k_2_1639669744745_C68327', '3_k_3', '3_q_1_1639669744746_X1X123', '3_q_1_1639669744746_X1X966',
               '3_q_1_1639669744746_X1X966344', '3_q_2_1639669744747_VE4N97', '3_q_3_1639669744747_NGHKKO']
-    #card_name = random.choice(list(cardLoaded.keys()))
 
 
+    sys_random = random.SystemRandom()
     listA= list1 + list2+list0 + list3
     if cardType=="red":
         listA= list1 + list2
@@ -403,8 +403,8 @@ def randomGetCard(cardLoaded, _nb_cards_by_value,cardType):
     if cardType=="0only":
         listA =list0   
     #print(list(cardLoaded.keys()))
-    random.seed(datetime.now())
-    card_name = random.choice(listA)
+    
+    card_name = sys_random.choice(listA)
     #print("card_name ", cardLoaded.keys())
     ##card_name = "1_j_1"
     card33, left, right = cardLoaded[card_name][random.randint(0, _nb_cards_by_value[card_name]-1)]
@@ -425,18 +425,7 @@ def roundTo(num):
 
 def getFinialPointToYolov5(bb, final):
 
-    """
-    bbW = (bb.x2-bb.x1)
-    bbH = bb.y2-bb.y1
-
-    centerY = bb.y1+(bbH/2)
-    centerX = bb.x1+(bbW/2)
-
-    strW = roundTo(bbW/final.shape[0])
-    strH = roundTo(bbH/final.shape[0])
-    strX = roundTo(centerX/final.shape[0])
-    strY = roundTo(centerY/final.shape[0])
-    """
+  
     bbW = (bb.x2-bb.x1)
     bbH = bb.y2-bb.y1
 

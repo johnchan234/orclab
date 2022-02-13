@@ -24,7 +24,7 @@ for filename in os.listdir(srcFile):
     if ".png" in filename:
        # print(str(i)+":"+filename)
         
-        needW = 20
+        needW = 23
         needH = 70
         cardName = filename.split(".")[0]
         cards[cardName] = []
