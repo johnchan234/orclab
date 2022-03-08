@@ -377,6 +377,10 @@ def randomGetCard(cardLoaded, _nb_cards_by_value, cardType):
         listA = list3
     if cardType == "0only":
         listA = list0
+    if  cardType == "2only":
+        listA = list2
+    if  cardType == "1only":
+        listA = list1
 
     card_name = sys_random.choice(listA)
     #print("card_name ", cardLoaded.keys())
