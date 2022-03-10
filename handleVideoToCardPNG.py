@@ -27,16 +27,15 @@ outputFile = "./image/videoCard/new/"
 
 """LOOP jpg / video cap, find the card and save as PNG"""
 
+print(srcFile)
   
-
-for i, filename in enumerate(glob(srcFile+"*.jpeg")):
+for i, filename in enumerate(glob(srcFile+"*.jpg")):
  
     baseImg = cv2.imread(filename)
     print("handle filename  : ", filename)
     card = Utils.getCardFomImg(baseImg)
-    print(card)
-    
-    
+  
+
     for num, x in enumerate(card):
         Utils.saveCard(x, outputFile, str(i)+"_"+str(num)+".png")
     

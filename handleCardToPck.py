@@ -16,7 +16,7 @@ import Utils
 
 
 """Save card to pck ----------------"""
-cards_pck_fn = "./image/pck/cards.pck"
+cards_pck_fn = "./image/pck/newCards.pck"
 srcFile = "./image/videoCard/topck/"
 cards = {}
 i  = 0

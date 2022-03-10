@@ -85,7 +85,7 @@ def getCardFomImg(baseImg):
 
     changeBGImg = change_bg(baseImg)
     cv2.imshow('changeBGImg', changeBGImg)
-    return
+
     cnts, outhier = cv2.findContours(
         changeBGImg, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
