@@ -208,19 +208,35 @@ for genNum in range(0, genMax):
 
     #tempN2 = findCardName(cardName2)
 
-    print("genNum :", genNum, " card1 : ", card1.getRealCardName(),
-          "card2 : ",  card2.getRealCardName(), " card3: ", card3.getRealCardName())
+    if genNum%100 ==0:
+        print("genNum :", genNum, " card1 : ", card1.getRealCardName(),
+              "card2 : ",  card2.getRealCardName(), " card3: ", card3.getRealCardName())
+    
+    
 
-    txt = card1.getBBYolov5LabelString()
-    txt += card1.getBBDownYolov5LabelString()
+    """
+    txt = card1.getYolov5LabelString("BB")
+    txt += card1.getYolov5LabelString("BBDown")
 
-    txt += card2.getBBYolov5LabelString()
-    txt += card2.getBBDownYolov5LabelString()
-    ##txt += toYolov5LabelFormat(tempN2, strXDown2,strYDown2, strWDown2, strHDown2)
+    txt += card2.getYolov5LabelString("BB")
+    txt += card2.getYolov5LabelString("BBDown")
+    
 
-    txt += card3.getBBYolov5LabelString()
-    txt += card3.getBBDownYolov5LabelString()
+    txt += card3.getYolov5LabelString("BB")
+    txt += card3.getYolov5LabelString("BBDown")
+    """
 
+    #txt = card1.getYolov5LabelString("BB")
+    #txt += card2.getYolov5LabelString("BB")
+    #txt += card3.getYolov5LabelString("BB")
+
+    txt = ""
+    txt += card1.getYolov5LabelString("BBCenter")
+    txt += card2.getYolov5LabelString("BBCenter")
+    txt += card3.getYolov5LabelString("BBCenter")
+
+
+    
     toFiler = "train"
     if genNum > int(genMax*0.9)-3:
         toFiler = "val"
@@ -234,10 +250,11 @@ for genNum in range(0, genMax):
              toFiler+"/"+dataJPGName+".txt", "w+")
     f.write(txt)
     f.close()
-"""
+
+    """
     fig, ax = plt.subplots(figsize=(9, 9))
     ax.imshow(final)
-
+    
     ax.add_patch(Utils.genRectanglePath(card1.getBB()))
     ax.add_patch(Utils.genRectanglePath(card1.getBBDown()))
 
@@ -246,11 +263,13 @@ for genNum in range(0, genMax):
 
     ax.add_patch(Utils.genRectanglePath(card3.getBB()))
     ax.add_patch(Utils.genRectanglePath(card3.getBBDown()))
+ 
 
     ax.add_patch(Utils.genRectanglePath(card1.getBBcenter()))
     ax.add_patch(Utils.genRectanglePath(card2.getBBcenter()))
     ax.add_patch(Utils.genRectanglePath(card3.getBBcenter()))
 
     print(txt)
-    plt.show()
-    """
+    plt.show()"""
+
+    

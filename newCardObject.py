@@ -179,10 +179,14 @@ class MyCard:
         self.bb = bb
         self.bbdown =bbdown
         self.bbcenter = bbcenter
+    
         self.mask = mask
+
 
         self.bbXY = self.getFinialPointToYolov5(bb)
         self.bbDownXY = self.getFinialPointToYolov5(bbdown)
+     
+        self.bbcenterXY = self.getFinialPointToYolov5(bbcenter)
 
         return imageAug, bb, bbdown, bbcenter, mask
 
@@ -200,6 +204,9 @@ class MyCard:
         strH = Utils.roundTo(bbH/final.shape[0])
         strX = Utils.roundTo(centerX/final.shape[0])
         strY = Utils.roundTo(centerY/final.shape[0])
+
+       # print("bbcenter r : ", {"w":strW, "h":strH, "x":strX, "y":strY})
+ 
         return {"w":strW, "h":strH, "x":strX, "y":strY}
 
 
@@ -210,8 +217,7 @@ class MyCard:
         return self.mask
     def getImageAug(self):
         return self.imageAug
-    def getbbCenter(self):
-        return self.bbcenter
+ 
 
     def getBB(self):
         return self.bb
@@ -220,7 +226,9 @@ class MyCard:
 
     def getBBcenter(self):
         return self.bbcenter
-        
+
+    def getBBcenterXY(self):
+        return self.bbcenterXY
 
     def getBBXY(self):
         return self.bbXY
@@ -234,6 +242,21 @@ class MyCard:
 
     ##card1Name, bbXy["x"], bbXy["y"], bbXy["w"], bbXy["h"])
 
+    def getYolov5LabelString(self,tt):
+        if tt == "BB":
+            bbXy = self.getBBXY()
+        if tt =="BBDown":
+            bbXy = self.getBBDownXY()
+        if tt == "BBCenter":
+            bbXy = self.getBBcenterXY()
+
+
+        txt = self.toYolov5LabelFormat(
+        self.getRealCardName(), bbXy["x"], bbXy["y"], bbXy["w"], bbXy["h"])
+        
+        return txt    
+
+    """
     def getBBYolov5LabelString(self):
         bbXy = self.getBBXY()
         txt = self.toYolov5LabelFormat(
@@ -241,13 +264,14 @@ class MyCard:
 
         return txt
 
-    def getBBDownYolov5LabelString(self):
+
+    def getBBCenterYolov5LabelString(self):
         bbXy = self.getBBDownXY()
 
         txt = self.toYolov5LabelFormat(
             self.getRealCardName(), bbXy["x"], bbXy["y"], bbXy["w"], bbXy["h"])
         return txt
-
+    """
     def toYolov5LabelFormat(self,s1, s2, s3, s4, s5):
         txt = s1+" "+s2+" "+s3 + " "+s4+" "+s5+"\n"
         return txt
